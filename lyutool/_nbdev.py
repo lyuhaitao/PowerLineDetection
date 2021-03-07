@@ -22,10 +22,18 @@ index = {"grid_subsampling": "00_core.ipynb",
          "locatePointsFromBuffer": "00_core.ipynb",
          "locatePointsFromBufferSlideWindow": "00_core.ipynb",
          "getFeaturesFromPointCloud": "00_core.ipynb",
+         "evaluateLinesDiscontinuity": "00_core.ipynb",
+         "constructCorridorsByHT": "00_core.ipynb",
          "LPoints": "00_core.ipynb",
          "generateLPByIDS": "00_core.ipynb",
          "Hline": "00_core.ipynb",
-         "ImageBuffer": "00_core.ipynb"}
+         "ImageBuffer": "00_core.ipynb",
+         "getPointsFromSlideCorridors": "00_core.ipynb",
+         "constructSlideCuboidsByPointCloud": "00_core.ipynb",
+         "extractLinesFromCorridor": "00_core.ipynb",
+         "generateSlideWindowByX": "00_core.ipynb",
+         "extractLinesFromPointCloud": "00_core.ipynb",
+         "secondHTandSW": "00_core.ipynb"}
 
 modules = ["core.py"]
 

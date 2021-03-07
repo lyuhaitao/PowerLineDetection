@@ -4,14 +4,21 @@ __all__ = ['grid_subsampling', 'Arrow3D', 'arrow3D', 'getDirctionVectorsByPCA', 
            'radiusOfCylinderByLeastSq', 'get_start_end_line', 'cylinderSurface', 'extractFeathersByPointCloud',
            'pointsToRaster', 'getCellIDByPolarCoordinates', 'houghToRasterByCellID', 'recordHoughLines',
            'countNumOfConsecutiveObj', 'calRowByColViaLineEquation', 'generateCorridorByLine', 'generateBuffer',
-           'locatePointsFromBuffer', 'locatePointsFromBufferSlideWindow', 'getFeaturesFromPointCloud', 'LPoints',
-           'generateLPByIDS', 'Hline', 'ImageBuffer']
+           'locatePointsFromBuffer', 'locatePointsFromBufferSlideWindow', 'getFeaturesFromPointCloud',
+           'evaluateLinesDiscontinuity', 'constructCorridorsByHT', 'LPoints', 'generateLPByIDS', 'Hline', 'ImageBuffer',
+           'getPointsFromSlideCorridors', 'constructSlideCuboidsByPointCloud', 'extractLinesFromCorridor',
+           'generateSlideWindowByX', 'extractLinesFromPointCloud', 'secondHTandSW']
 
 # Cell
 import numpy as np
 from tqdm import tqdm
 from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d.proj3d import proj_transform
+from mpl_toolkits import mplot3d
+from scipy.linalg import norm
+from scipy.optimize import leastsq
+from skimage.transform import hough_line, hough_line_peaks
 
 # Cell
 def grid_subsampling(points, voxel_size):
@@ -469,6 +476,83 @@ def getFeaturesFromPointCloud(**kwargs):
     return features
 
 # Cell
+def evaluateLinesDiscontinuity(**kwargs):
+    "evaluate the extent of lines' discontinuity, which is to calculate the maximal length of discontinuous lines"
+    hl = kwargs['hough-lines']
+    maxdist = kwargs['maxdist']
+    img_base = kwargs['img_base']
+    lid = []
+    for k in range(len(hl)):
+        a = {'HLine':hl[k], 'maxdist':maxdist}
+        rc = calRowByColViaLineEquation(**a)
+        val = []
+        for ij in rc:
+            i = ij[0]
+            j = ij[1]
+            val.append(img_base[i,j])
+        #
+        aa = countNumOfConsecutiveObj(*[val,0])
+        lid.append(np.max(aa))
+    return lid
+#export
+def constructCorridorsByHT(**kwargs):
+    "Construct corridors based on the lines extracted by Hough transform"
+    xyz_min = kwargs['xyz_min']
+    xyz_max = kwargs['xyz_max']
+    pts_1 = kwargs['points']
+    cellsize = kwargs['cellsize']
+    threshold_line = kwargs['HF_peaks_threshold']
+    maxdist = kwargs['maxdist']
+    threshold_discontinuity = kwargs['discontinuity_threshold']
+    buffer_size = kwargs['buffer_size']
+    #
+    a = {'min_xyz':xyz_min, 'max_xyz':xyz_max, 'pts':pts_1, 'cellsize':1}
+    img_xy = pointsToRaster(**a) # rtn
+    # Hough transform
+    tested_angles = np.linspace(0, 2*np.pi, 360)
+    h, theta, d = hough_line(img_xy, theta = tested_angles)
+    hough_peaks = hough_line_peaks(h, theta, d, threshold=threshold_line)
+    # filter the short lines based on hough peaks and raster image img_xy
+    a = {'img': img_xy, 'peaks':zip(*hough_peaks), 'maxdist':maxdist}
+    img_base = houghToRasterByCellID(**a) # rtn
+    # calcualte the length of lines. the number of cells on lines
+    a = {'img': img_base, 'peaks':zip(*hough_peaks), 'maxdist':maxdist}
+    hl = recordHoughLines(**a) # rtn hough-lines
+    hl = np.array(hl)
+    # judge the extent of a line discontinuity.
+    a = {'hough-lines': hl, 'maxdist': 1, 'img_base': img_base}
+    lid = evaluateLinesDiscontinuity(**a) # rtn discontinuity of lines
+    lid = np.array(lid)
+    # remove the lines with long discontinuity
+    idx = np.argwhere(lid < threshold_discontinuity)
+    hltemp = hl[idx.ravel()]
+    # generate new raster image with continuous lines
+    a = {'img':img_xy, 'HLine':hltemp}
+    img_temp = generateCorridorByLine(**a) # rtn image with continuous lines
+    # construct corridors based on img_temp and buffer operation
+    line_params = []
+    for h in hltemp:
+        line_params.append(h.coord)
+    a = {'img': img_base, 'peaks':line_params, 'maxdist':buffer_size}
+    img_corridors = generateBuffer(**a) # rtn corridors
+    # generate image buffer array
+    lineBufferArray = [] # rtn the collection of corridors
+    for h in hltemp:
+        a = {'img': img_base, 'peaks':[h.coord], 'maxdist':buffer_size}
+        img = generateBuffer(**a)
+        lineBufferArray.append(img)
+    #
+    rtn = {'img_xy': img_xy,
+           'img_base': img_base,
+           'hough_lines': hl,
+           'discontinuity': lid,
+           'img_lines': img_temp,
+           'img_corridors': img_corridors,
+           'corridors': lineBufferArray
+          }
+    return rtn
+
+# Cell
 class LPoints:
     "the class is used to record the points' indices in the original dataset."
     def __init__(self, args):
@@ -508,3 +592,247 @@ class ImageBuffer():
     def __init__(self, **kwargs):
         self.img = kwargs['img']
         self.coord = kwargs['coord']
+
+# Cell
+def getPointsFromSlideCorridors(**kwargs):
+    "get the points in slide corridors"
+    corridor = kwargs['corridor']
+    xyz_min = kwargs['xyz_min']
+    cellsize = kwargs['cellsize']
+    xyz = kwargs['xyz']
+    step = kwargs['step']
+    rtn = []
+    # get all points in a corridor
+    a = {'img_buffer': corridor,
+         'min_xyz': xyz_min,
+         'pts': xyz,
+         'cellsize': cellsize
+        }
+    pids = locatePointsFromBuffer(**a)
+    lp_line = LPoints(pids)
+    pts_line = xyz[pids]
+    # get a collection of the points in each slide corridor
+    zl = np.min(pts_line,axis=0)[2]
+    zh = np.max(pts_line,axis=0)[2]
+    zz = np.arange(zl+4, zh+1-step)
+    for z in zz:
+        ids_sw = []
+        a = {'img_buffer': corridor,
+             'min_xyz': xyz_min,
+             'pts': pts_line,
+             'cellsize': cellsize,
+             'z_range': [z, z+step]
+            }
+        pids = locatePointsFromBufferSlideWindow(**a)
+        for p in pids:
+            ids_sw.append(lp_line.dic[p])
+        lp_sw = LPoints(ids_sw)
+        rtn.append(lp_sw)
+    return rtn
+#export
+def constructSlideCuboidsByPointCloud(**kwargs):
+    "construct slide cuboids based on a point cloud"
+    pids = kwargs['pids'] # the row numbers of points in original data xyz
+    xyz = kwargs['xyz']
+    corridor = kwargs['corridor']
+    xyz_min = kwargs['xyz_min']
+    cellsize = kwargs['cellsize']
+    step = kwargs['step']
+    rtn = []
+    lp_line = LPoints(pids)
+    pts_line = xyz[pids]
+    # get a collection of the points in each slide corridor
+    zl = np.min(pts_line,axis=0)[2]
+    zh = np.max(pts_line,axis=0)[2]
+    zl = np.floor(zl)
+    zh = np.ceil(zh)
+    zz = np.arange(zl, zh+1-step)
+    for z in zz:
+        ids_sw = []
+        a = {'img_buffer': corridor,
+             'min_xyz': xyz_min,
+             'pts': pts_line,
+             'cellsize': cellsize,
+             'z_range': [z, z+step]
+            }
+        pids = locatePointsFromBufferSlideWindow(**a)
+        for p in pids:
+            ids_sw.append(lp_line.dic[p])
+        lp_sw = LPoints(ids_sw)
+        rtn.append(lp_sw)
+    return rtn
+#export
+def extractLinesFromCorridor(**kwargs):
+    "extract power lines from a corridor by a slide cuboid"
+    corridor = kwargs['corridor']
+    xyz_min = kwargs['xyz_min']
+    xyz_max = kwargs['xyz_max']
+    cellsize = kwargs['cellsize']
+    xyz = kwargs['xyz']
+    step = kwargs['step']
+    maxdist = kwargs['maxdist']
+    buffer_size = kwargs['buffer_size']
+    HF_peaks_threshold = kwargs['HF_peaks_threshold']
+    discontinuity_threshold = kwargs['discontinuity_threshold']
+    # calculate the id of points in slide corridors, return value is a list of dictionary
+    a = {'corridor': corridor,
+         'xyz_min': xyz_min,
+         'cellsize': cellsize,
+         'xyz': xyz,
+         'step':step
+        }
+    ids_sw = getPointsFromSlideCorridors(**a)
+    # extract corridors in each slide corridors
+    cs = [] # return value is a list of dictionary
+    for s in ids_sw:
+        pids = list(s.dic.values())
+        if len(pids) == 0:
+            continue
+        pts_sw = xyz[pids]
+        a = {'xyz_min': xyz_min,
+             'xyz_max': xyz_max,
+             'points' : pts_sw,
+             'cellsize': cellsize,
+             'HF_peaks_threshold': HF_peaks_threshold,
+             'maxdist': maxdist,
+             'discontinuity_threshold': discontinuity_threshold,
+             'buffer_size': buffer_size
+            }
+        rtn = constructCorridorsByHT(**a)
+        if len(rtn['corridors']) > 0:
+            b = {'dic_HT':rtn, 'dic_pids':s}
+            cs.append(b)
+    # extract power lines from sub-corridors
+    lids = []
+    for s in cs:
+        dic_HT = s['dic_HT']
+        dic_pids = s['dic_pids']
+        pids = list(dic_pids.dic.values())
+        pts_sw = xyz[pids]
+        crs = dic_HT['corridors']
+
+        for i in crs:
+            a = {'img_buffer': i,
+                 'min_xyz': xyz_min,
+                 'pts': pts_sw,
+                 'cellsize': cellsize
+                }
+            bs = locatePointsFromBuffer(**a)
+            for j in bs:
+                lids.append(dic_pids.dic[j])
+    #
+    lids = np.unique(lids)
+    return lids
+#export
+def generateSlideWindowByX(**kwargs):
+    xyz = kwargs['xyz']
+    pids = kwargs['pids']
+    step = kwargs['step']
+    pids = np.array(pids)
+    pts = xyz[pids]
+    zl = np.floor(np.min(pts,axis=0)[0])
+    zh = np.ceil(np.max(pts,axis=0)[0])
+    zz = np.arange(zl, zh+1-step)
+    rtn = []
+    for z in zz:
+        con = np.logical_and(pts[:,0]>=z, pts[:,0] < z+step)
+        ids_sw = pids[con]
+        lp_sw = LPoints(ids_sw)
+        rtn.append(lp_sw)
+    return rtn
+#export
+def extractLinesFromPointCloud(**kwargs):
+    "extract lines from a point cloud. it combines other functions"
+    corridor = kwargs['corridor']
+    pids = kwargs['pids'] # the ids of a point cloud
+    xyz_min = kwargs['xyz_min']
+    xyz_max = kwargs['xyz_max']
+    cellsize = kwargs['cellsize']
+    xyz = kwargs['xyz']
+    step = kwargs['step']
+    maxdist = kwargs['maxdist']
+    buffer_size = kwargs['buffer_size']
+    HF_peaks_threshold = kwargs['HF_peaks_threshold']
+    discontinuity_threshold = kwargs['discontinuity_threshold']
+    #
+    #
+    a = {'pids':pids, 'xyz': xyz, 'corridor': corridor, 'xyz_min': xyz_min, 'cellsize':cellsize, 'step':step}
+    ids_sw = constructSlideCuboidsByPointCloud(**a)
+    # extract corridors in each slide corridors
+    cs = [] # return value is a list of dictionary
+    for s in ids_sw:
+        s_pids = list(s.dic.values())
+        if len(s_pids) == 0:
+            continue
+        pts_sw = xyz[s_pids]
+        a = {'xyz_min': xyz_min,
+             'xyz_max': xyz_max,
+             'points' : pts_sw,
+             'cellsize': cellsize,
+             'HF_peaks_threshold': HF_peaks_threshold,
+             'maxdist': maxdist,
+             'discontinuity_threshold': discontinuity_threshold,
+             'buffer_size': buffer_size
+            }
+        rtn = constructCorridorsByHT(**a)
+        if len(rtn['corridors']) > 0:
+            b = {'dic_HT':rtn, 'dic_pids':s}
+            cs.append(b)
+    # extract power lines from sub-corridors
+    lids = []
+    for s in cs:
+        dic_HT = s['dic_HT']
+        dic_pids = s['dic_pids']
+        s_pids = list(dic_pids.dic.values())
+        pts_sw = xyz[s_pids]
+        crs = dic_HT['corridors']
+
+        for i in crs:
+            a = {'img_buffer': i,
+                 'min_xyz': xyz_min,
+                 'pts': pts_sw,
+                 'cellsize': cellsize
+                }
+            bs = locatePointsFromBuffer(**a)
+            for j in bs:
+                lids.append(dic_pids.dic[j])
+    #
+    lids = np.unique(lids)
+    return lids
+#export
+def secondHTandSW(**kwargs):
+    "second slide window and Hough transform"
+    pids = kwargs['pids']
+    corridor = kwargs['corridor']
+    stepxy = kwargs['stepxy']
+    stepz = kwargs['stepz']
+    xyz = kwargs['xyz']
+    xyz_min = kwargs['xyz_min']
+    xyz_max = kwargs['xyz_max']
+    cellsize = kwargs['cellsize']
+    maxdist = kwargs['maxdist']
+    buffer_size = kwargs['buffer_size']
+    HF_peaks_threshold = kwargs['HF_peaks_threshold']
+    discontinuity_threshold = kwargs['discontinuity_threshold']
+    #
+    a = {'xyz': xyz, 'pids': pids, 'step': stepxy }
+    gswx = generateSlideWindowByX(**a)
+    lp_array = []
+    for g in gswx:
+        g_pids = list(g.dic.values())
+        a = {'pids': g_pids,
+             'corridor': corridor,
+             'xyz_min': xyz_min,
+             'xyz_max': xyz_max,
+             'cellsize': cellsize,
+             'xyz': xyz,
+             'step': stepz,
+             'maxdist': maxdist,
+             'buffer_size': buffer_size,
+             'HF_peaks_threshold': HF_peaks_threshold,
+             'discontinuity_threshold': discontinuity_threshold
+            }
+        lids = extractLinesFromPointCloud(**a)
+        lp = LPoints(lids)
+        lp_array.append(lp)
+    return lp_array
