@@ -2,8 +2,7 @@
 
 __all__ = ["index", "modules", "custom_doc_links", "git_url"]
 
-index = {"test_np": "00_core.ipynb",
-         "grid_subsampling": "00_core.ipynb"}
+index = {"grid_subsampling": "00_core.ipynb"}
 
 modules = ["core.py"]
 
