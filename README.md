@@ -501,7 +501,7 @@ plt.show()
 lps = []
 hp1 = [37,37, 37, 37, 37,37, 20]
 hp2 = [37,47, 47, 47, 17,17, 10]
-for i in tqdm(range(1,7)):
+for i in tqdm(range(0,7)):
     a = {'corridor': corridors[i],
          'xyz_min': xyz_min,
          'xyz_max': xyz_max,
