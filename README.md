@@ -15,7 +15,43 @@ This file will become your README and also the index of your documentation.
 
 ## How to use
 
-Fill me in please! Don't forget code examples:
+Read LiDAR data with the extension of .las, which is stored in the folder of 'testdata'. 
+
+```python
+las_fp = pathlib.Path('testdata/t_remain.las')
+inFile = lp.file.File(las_fp, mode='r')
+classification = inFile.classification
+xyz = np.vstack([inFile.x, inFile.y, inFile.z]).transpose()
+xyz_min = np.min(xyz, axis=0)
+xyz_max = np.max(xyz, axis=0)
+# Record the index information of each category
+idx = classification == 1
+lp_1 = generateLPByIDS(idx)
+idx = classification == 10
+lp_10 = generateLPByIDS(idx)
+idx = classification == 11
+lp_11 = generateLPByIDS(idx)
+idx = classification == 19
+lp_19 = generateLPByIDS(idx)
+#
+tree = KDTree(xyz)
+```
+
+
+    ---------------------------------------------------------------------------
+
+    NameError                                 Traceback (most recent call last)
+
+    <ipython-input-58-7059e4d0714a> in <module>
+          7 # Record the index information of each category
+          8 idx = classification == 1
+    ----> 9 lp_1 = generateLPByIDS(idx)
+         10 idx = classification == 10
+         11 lp_10 = generateLPByIDS(idx)
+
+
+    NameError: name 'generateLPByIDS' is not defined
+
 
 ```python
 las_fp = pathlib.Path('testdata/t_remain.las')
@@ -29,7 +65,7 @@ grid_candidate = dc['candidate']
     (3,)
 
 
-    100%|██████████| 26523/26523 [00:01<00:00, 20562.73it/s]
+    100%|██████████| 26523/26523 [00:01<00:00, 20719.37it/s]
 
 
 ```python
@@ -43,5 +79,5 @@ plt.show()
 ```
 
 
-![png](docs/images/output_7_0.png)
+![png](docs/images/output_8_0.png)
 

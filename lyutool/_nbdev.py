@@ -3,7 +3,29 @@
 __all__ = ["index", "modules", "custom_doc_links", "git_url"]
 
 index = {"grid_subsampling": "00_core.ipynb",
-         "Arrow3D": "00_core.ipynb"}
+         "Arrow3D": "00_core.ipynb",
+         "arrow3D": "00_core.ipynb",
+         "getDirctionVectorsByPCA": "00_core.ipynb",
+         "pointsProjectAxis": "00_core.ipynb",
+         "radiusOfCylinderByLeastSq": "00_core.ipynb",
+         "get_start_end_line": "00_core.ipynb",
+         "cylinderSurface": "00_core.ipynb",
+         "extractFeathersByPointCloud": "00_core.ipynb",
+         "pointsToRaster": "00_core.ipynb",
+         "getCellIDByPolarCoordinates": "00_core.ipynb",
+         "houghToRasterByCellID": "00_core.ipynb",
+         "recordHoughLines": "00_core.ipynb",
+         "countNumOfConsecutiveObj": "00_core.ipynb",
+         "calRowByColViaLineEquation": "00_core.ipynb",
+         "generateCorridorByLine": "00_core.ipynb",
+         "generateBuffer": "00_core.ipynb",
+         "locatePointsFromBuffer": "00_core.ipynb",
+         "locatePointsFromBufferSlideWindow": "00_core.ipynb",
+         "getFeaturesFromPointCloud": "00_core.ipynb",
+         "LPoints": "00_core.ipynb",
+         "generateLPByIDS": "00_core.ipynb",
+         "Hline": "00_core.ipynb",
+         "ImageBuffer": "00_core.ipynb"}
 
 modules = ["core.py"]
 
