@@ -1,5 +1,5 @@
 # Powerline Detection From LiDAR Data
-> 1) We proposed a cylinder fitting model based on PCA to develop a new pointwise feature extraction method that can be used to filter non-line points. 2) We introduced a method for powerline corridors construction to avoid the powerline points to be falsely filtered as non-line points. 3) We put forward a refinement model to accurately extract powerlines from the corridors.
+> 1) We proposed a cylinder fitting model based on PCA to develop a new pointwise feature extraction method that can be used to filter non-line points. 2) We introduced a method for powerline corridors construction to avoid the powerline points to be falsely filtered as non-line points. 3) We put forward a refinement model to accurately extract powerlines from the corridors. The full code is accessible here: <a href='https://github.com/lyuhaitao/lyutool/blob/master/index.ipynb'>github Jupyter notebook</a>
 
 
 ```python
