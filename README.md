@@ -18,7 +18,7 @@ This file will become your README and also the index of your documentation.
 Fill me in please! Don't forget code examples:
 
 ```python
-las_fp = pathlib.Path('/home/hxl170008/data/t_remain.las')
+las_fp = pathlib.Path('testdata/t_remain.las')
 point_cloud = lp.file.File(las_fp, mode='r')
 points = np.vstack((point_cloud.x, point_cloud.y, point_cloud.z)).transpose()
 dc = grid_subsampling(points, 1)
@@ -29,7 +29,7 @@ grid_candidate = dc['candidate']
     (3,)
 
 
-    100%|██████████| 26523/26523 [00:01<00:00, 21065.72it/s]
+    100%|██████████| 26523/26523 [00:01<00:00, 20562.73it/s]
 
 
 ```python
