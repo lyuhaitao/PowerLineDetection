@@ -54,7 +54,7 @@ def locatePointsFromBuffer_3D(**kwargs):
         fcy = np.logical_and(pts[:,1] >= j, pts[:,1] < (j + cellsize))
         fcz = np.logical_and(pts[:,2] >= z_min, pts[:,2] <= z_max)
         idx = np.logical_and(fcx, fcy)
-        idx = np.logical_add(idx, fcz)
+        idx = np.logical_and(idx, fcz)
         a = np.argwhere(idx==True)
         a = a.ravel()
         nid_line = nid_line + a.tolist()
