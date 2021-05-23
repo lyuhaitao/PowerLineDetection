@@ -21,7 +21,7 @@ def grid_subsampling(points, voxel_size):
     "Define a function that takes as input an array of points, and a voxel size expressed in meters"
     "points: it is from a LiDAR data; voxel_size: the length of edge"
     nb_vox=np.ceil((np.max(points, axis=0) - np.min(points, axis=0))/voxel_size)
-    print(nb_vox.shape)
+
     a = ((points - np.min(points, axis=0)) // voxel_size).astype(int)
     non_empty_voxel_keys, inverse, nb_pts_per_voxel= np.unique(a, axis=0, return_inverse=True, return_counts=True)
     idx_pts_vox_sorted=np.argsort(inverse)
@@ -480,7 +480,7 @@ def constructCorridorsByHT(**kwargs):
     threshold_discontinuity = kwargs['discontinuity_threshold']
     buffer_size = kwargs['buffer_size']
     #
-    a = {'min_xyz':xyz_min, 'max_xyz':xyz_max, 'pts':pts_1, 'cellsize':1}
+    a = {'min_xyz':xyz_min, 'max_xyz':xyz_max, 'pts':pts_1, 'cellsize':cellsize}
     img_xy = pointsToRaster(**a) # rtn
     # Hough transform
     tested_angles = np.linspace(0, 2*np.pi, 360)
