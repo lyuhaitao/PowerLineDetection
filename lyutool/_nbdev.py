@@ -2,7 +2,9 @@
 
 __all__ = ["index", "modules", "custom_doc_links", "git_url"]
 
-index = {"grid_subsampling": "00_core.ipynb",
+index = {"Hline": "00_core.ipynb",
+         "ImageBuffer": "00_core.ipynb",
+         "grid_subsampling": "00_core.ipynb",
          "getDirctionVectorsByPCA": "00_core.ipynb",
          "pointsProjectAxis": "00_core.ipynb",
          "radiusOfCylinderByLeastSq": "00_core.ipynb",
@@ -22,20 +24,22 @@ index = {"grid_subsampling": "00_core.ipynb",
          "getFeaturesFromPointCloud": "00_core.ipynb",
          "evaluateLinesDiscontinuity": "00_core.ipynb",
          "constructCorridorsByHT": "00_core.ipynb",
-         "LPoints": "01_my_data_structure.ipynb",
-         "generateLPByIDS": "02_functions.ipynb",
-         "Hline": "01_my_data_structure.ipynb",
-         "ImageBuffer": "01_my_data_structure.ipynb",
          "getPointsFromSlideCorridors": "00_core.ipynb",
          "constructSlideCuboidsByPointCloud": "00_core.ipynb",
          "extractLinesFromCorridor": "00_core.ipynb",
          "generateSlideWindowByX": "00_core.ipynb",
          "extractLinesFromPointCloud": "00_core.ipynb",
          "secondHTandSW": "00_core.ipynb",
+         "LPoints": "01_my_data_structure.ipynb",
+         "generateLPByIDS": "02_functions.ipynb",
          "getPointsFromSource": "02_functions.ipynb",
          "locatePointsFromBuffer_3D": "02_functions.ipynb",
          "calOutlierByIQR": "02_functions.ipynb",
-         "generateLineBordersByBuffer": "02_functions.ipynb"}
+         "generateLineBordersByBuffer": "02_functions.ipynb",
+         "extractLineFromTarget": "02_functions.ipynb",
+         "extractLineFromTarget_dales": "02_functions.ipynb",
+         "getVoxelKeys": "02_functions.ipynb",
+         "filterPointsByVoxel": "02_functions.ipynb"}
 
 modules = ["core.py",
            "lyuds.py",
