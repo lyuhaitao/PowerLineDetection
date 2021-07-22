@@ -10,21 +10,11 @@ entries:
       title: Overview
       url: /
     - output: web,pdf
-      title: Powerline Detection
+      title: Hough Transform
       url: core.html
     - output: web,pdf
-      title: Basic Data Structure
-      url: my_data_structure.html
-    - output: web,pdf
-      title: Functions
-      url: functions.html
-    - output: web,pdf
       title: Title
-      url: test.html
-    - output: web,pdf
-      title: utilize the attributes of return_num and num_returns to filter ground
-        points
-      url: index-124.html
+      url: functions.html
     output: web
     title: lyutool
   output: web

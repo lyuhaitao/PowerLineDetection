@@ -1,10 +1,7 @@
 {
   "lyutool": {
     "Overview": "/",
-    "Powerline Detection": "core.html",
-    "Basic Data Structure": "my_data_structure.html",
-    "Functions": "functions.html",
-    "Title": "test.html",
-    "utilize the attributes of return_num and num_returns to filter ground points": "index-124.html"
+    "Hough Transform": "core.html",
+    "Title": "functions.html"
   }
 }
